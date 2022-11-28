@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { Router } from '@angular/router';
+import { UserService } from 'src/services/user.service';
 import { ForgotPasswordComponent } from '../forgot-password/forgot-password.component';
+import { LoginComponent } from '../login/login.component';
 import { SignupComponent } from '../signup/signup.component';
 
 @Component({
@@ -10,9 +13,18 @@ import { SignupComponent } from '../signup/signup.component';
 })
 export class HomeComponent implements OnInit {
 
-  constructor(private dialog:MatDialog) { }
+  constructor(private dialog:MatDialog,
+              private router:Router,
+              private userService:UserService) { }
 
   ngOnInit(): void {
+    if(localStorage.getItem('token')!=null){
+      this.userService.checkTolen().subscribe((response:any)=>{
+        this.router.navigate(['/cafe/dashboard'])
+      }, (error:any)=>{
+        console.log(error)
+      })
+    }
   }
 
   signupAction(){
@@ -25,5 +37,11 @@ export class HomeComponent implements OnInit {
     const dialogConfig = new MatDialogConfig();
     dialogConfig.width="550px";
     this.dialog.open(ForgotPasswordComponent, dialogConfig);
+  }
+
+  loginAction(){
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.width="550px";
+    this.dialog.open(LoginComponent, dialogConfig);
   }
 }

@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../environments/environment';
+import { from, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -19,5 +20,15 @@ export class UserService {
     return this.httpClient.post(this.url+'/user/forgotPassword', data,{
       headers: new HttpHeaders().set('Content-Type', 'application/json')
     })
+  }
+
+  login(data:any){
+    return this.httpClient.post(this.url+'/user/login', data,{
+      headers: new HttpHeaders().set('Content-Type', 'application/json')
+    })
+  }
+
+  checkTolen():Observable<any>{
+    return this.httpClient.get(this.url + "/user/checktoken");
   }
 }
