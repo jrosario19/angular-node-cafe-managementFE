@@ -7,6 +7,7 @@ import { BillService } from 'src/services/bill.service';
 import { CategoryService } from 'src/services/category.service';
 import { ProductService } from 'src/services/product.service';
 import { SnackbarService } from 'src/services/snackbar.service';
+import { saveAs } from 'file-saver';
 
 @Component({
   selector: 'app-manage-order',
@@ -14,7 +15,7 @@ import { SnackbarService } from 'src/services/snackbar.service';
   styleUrls: ['./manage-order.component.scss']
 })
 export class ManageOrderComponent implements OnInit {
-  displayedColumns:string[]=['name', 'cetegory', 'price', 'quantity', 'total','edit'];
+  displayedColumns:string[]=['name', 'category', 'price', 'quantity', 'total','edit'];
   dataSource:any=[];
   manageOrderForm:any=FormGroup;
   categories:any=[];
@@ -129,6 +130,68 @@ export class ManageOrderComponent implements OnInit {
     }else{
       return false;
     }
+  }
+
+  add(){
+    var formData = this.manageOrderForm.value;
+    var productName = this.dataSource.find((e:{id:number;})=>e.id== formData.product.id);
+    if(productName===undefined){
+      this.totalAmount = this.totalAmount + formData.total;
+      this.dataSource.push({id:formData.product.id,
+                            name:formData.product.name,
+                            category:formData.category.name,
+                            quantity:formData.quantity,
+                            price:formData.price,
+                            total:formData.total});
+      this.dataSource=[...this.dataSource];
+      this.snackbarService.openSnackBar(GlobalConstants.productAdded,"success");
+    }else{
+      this.snackbarService.openSnackBar(GlobalConstants.productExistError, GlobalConstants.error)
+    }
+  }
+
+  handleDeleteAction(value:any, element:any){
+    this.totalAmount = this.totalAmount - element.total;
+    this.dataSource.splice(value,1);
+    this.dataSource=[...this.dataSource];
+  }
+
+  submitAction(){
+    this.ngxService.start();
+    var formData = this.manageOrderForm.value;
+    var data = {
+      name: formData.name,
+      email: formData.email,
+      contactNumber: formData.contactNumber,
+      paymentMethod: formData.paymentMethod,
+      totalAmount: this.totalAmount,
+      productDetails:JSON.stringify(this.dataSource)
+    }
+    this.billService.generateReport(data).subscribe((response:any)=>{
+      this.downloadFile(response?.uuid);
+      this.manageOrderForm.reset();
+      this.dataSource=[];
+      this.totalAmount=0;
+    }, (error:any)=>{
+      this.ngxService.stop();
+      if(error.error?.message){
+        this.responseMessage=error.error?.message;
+
+      }else{
+        this.responseMessage=GlobalConstants.genericError;
+      }
+      this.snackbarService.openSnackBar(this.responseMessage,GlobalConstants.error)
+    })
+  }
+
+  downloadFile(fileName:any){
+    var data ={
+      uuid:fileName
+    }
+    this.billService.getPDF(data).subscribe((response:any)=>{
+      saveAs(response, fileName+'.pdf');
+      this.ngxService.stop();
+    })
   }
 
 }
